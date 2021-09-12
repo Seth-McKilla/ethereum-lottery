@@ -1,7 +1,9 @@
 require("dotenv").config();
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3 = require("web3");
-const { interface, bytecode } = require("./compile");
+const compiledFile = require("./compile");
+const interface = compiledFile.abi;
+const bytecode = compiledFile.evm.bytecode.object;
 
 const provider = new HDWalletProvider({
   mnemonic: {
@@ -18,16 +20,15 @@ const web3 = new Web3(provider);
 
     console.log("Attempting to deploy from account", accounts[0]);
 
-    const result = await new web3.eth.Contract(JSON.parse(interface))
-      .deploy({
-        data: bytecode,
-      })
-      .send({ gas: "1000000", from: accounts[0], gasPrice: "5000000000" });
+    const result = await new web3.eth.Contract(interface)
+      .deploy({ data: bytecode })
+      .send({ from: accounts[0], gas: "1000000" });
 
+    console.log(interface);
     console.log("Contract deployed to", result.options.address);
+
+    provider.engine.stop();
   } catch (error) {
     console.error(error);
   }
 })();
-
-provider.engine.stop();
